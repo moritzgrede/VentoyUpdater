@@ -8,6 +8,7 @@ $VentoyUpdaterLogs = @{
 	'log'      = 'cli_log.txt'
 	'progress' = 'cli_percent.txt'
 }
+$Transcript = Join-Path -Path $PSScriptRoot -ChildPath 'transcript.log'
 
 #region FUNCTIONS
 function Start-Cleanup {
@@ -19,6 +20,7 @@ function Start-Cleanup {
 }
 
 #region SCRIPT
+Start-Transcript -LiteralPath $Transcript -UseMinimalHeader -Force
 # Cleanup any left-over files from a previous execution
 Start-Cleanup
 
@@ -26,6 +28,7 @@ Start-Cleanup
 $UsbDrive = Get-Volume | Where-Object { $_.FileSystemLabel -eq 'Ventoy' -and $_.DriveType -eq 'Removable' -and ( $_.Size / 1gb ) -lt 200 }  # Make sure that the drive is labeled "Ventoy", removeable and less than 200 GB
 if ( @( $UsbDrive ).Count -ne 1 ) {
 	Write-Error 'Error while identifying USB drive'
+	Stop-Transcript
 	exit 10
 }
 Write-Host "Updating Ventoy on USB drive mounted at $( $UsbDrive.DriveLetter )"
@@ -37,6 +40,7 @@ try {
 } catch {
 	Write-Error 'Error while trying to access USB metadata'
 	Write-Error $_
+	Stop-Transcript
 	exit 10
 }
 Write-Host "Current installed version is $( $Metadata.version )"
@@ -47,18 +51,21 @@ $LatestRelease = Invoke-RestMethod -Uri 'https://api.github.com/repos/ventoy/Ven
 if ( $RestResult -ne 200 ) {
 	Write-Error "Rest API call returned status code $( $RestResult )"
 	Write-Error $LatestRelease
+	Stop-Transcript
 	exit 10
 }
 $LatestRelease | Add-Member -MemberType NoteProperty -Name 'version' -Value ( [version] ( $LatestRelease.tag_name -replace '[vV]', '' ) )
 Write-Host "Found latest GitHub release to be `"$( $LatestRelease.name )`""
 if ( [version] $Metadata.version -ge $LatestRelease.version ) {
 	Write-Host 'Current version is equal to or greater than the current GitHub release'
+	Stop-Transcript
 	exit 0
 }
 Write-Host 'Download release from GitHub'
 $LatestReleaseArchive = $LatestRelease.assets | Where-Object -Property 'name' -Like -Value '*windows.zip'
 if ( @( $LatestReleaseArchive ).Count -ne 1 ) {
 	Write-Error 'Found more than 1 release for download'
+	Stop-Transcript
 	exit 10
 }
 Invoke-RestMethod -Uri $LatestReleaseArchive.browser_download_url -OutFile $VentoyReleaseArchive -StatusCodeVariable 'RestResult'
@@ -66,6 +73,7 @@ if ( $RestResult -ne 200 ) {
 	Write-Error "Rest API call returned status code $( $RestResult )"
 	Write-Error $LatestRelease
 	Start-Cleanup
+	Stop-Transcript
 	exit 10
 }
 
@@ -76,6 +84,7 @@ $VentoyUpdater = $VentoyReleaseFiles | Where-Object -Property Name -Like -Value 
 if ( @( $VentoyUpdater ).Count -ne 1 ) {
 	Write-Error 'Could not find Ventoy installer in release'
 	Start-Cleanup
+	Stop-Transcript
 	exit 10
 }
 foreach ( $Log in $VentoyUpdaterLogs.Clone().GetEnumerator() ) {
@@ -90,6 +99,7 @@ while ( $true ) {
 	if ( ( Get-Date ) -ge $Timeout ) {
 		Write-Error 'Reached timeout while waiting for Ventoy to update'
 		Start-Cleanup
+		Stop-Transcript
 		exit 10
 	}
 	try {
@@ -106,6 +116,7 @@ while ( $true ) {
 				Write-Error 'Ventoy update failed'
 				Get-Content -LiteralPath $VentoyUpdaterLogs.log -Raw -ErrorAction SilentlyContinue | Write-Host
 				Start-Cleanup
+				Stop-Transcript
 				exit 10
 			}
 		} catch {
@@ -123,4 +134,5 @@ $Metadata | ConvertTo-Json | Out-File -FilePath $MetadataFile -Force
 
 # Exit
 Start-Cleanup
+Stop-Transcript
 exit 0
