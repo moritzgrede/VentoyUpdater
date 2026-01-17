@@ -9,6 +9,7 @@ $VentoyUpdaterLogs = @{
 	'progress' = 'cli_percent.txt'
 }
 $Transcript = Join-Path -Path $PSScriptRoot -ChildPath 'transcript.log'
+$GetVentoyUsb = Join-Path -Path $PSScriptRoot -ChildPath 'helper\Get-VentoyUsb.ps1'
 
 #region FUNCTIONS
 function Start-Cleanup {
@@ -25,16 +26,17 @@ Start-Transcript -LiteralPath $Transcript -UseMinimalHeader -Force
 Start-Cleanup
 
 # Find valid USB drive
-$UsbDrive = Get-Volume | Where-Object { $_.FileSystemLabel -eq 'Ventoy' -and $_.DriveType -eq 'Removable' -and ( $_.Size / 1gb ) -lt 200 }  # Make sure that the drive is labeled "Ventoy", removeable and less than 200 GB
-if ( @( $UsbDrive ).Count -ne 1 ) {
-	Write-Error 'Error while identifying USB drive'
+try {
+	$UsbDrive = &$GetVentoyUsb
+} catch {
+	Write-Error $_
 	Stop-Transcript
 	exit 10
 }
-Write-Host "Updating Ventoy on USB drive mounted at $( $UsbDrive.DriveLetter )"
+Write-Host "Updating Ventoy on USB drive mounted at $( $UsbDrive )"
 
 # Get metadata from drive
-$MetadataFile = Join-Path -Path "$( $UsbDrive.DriveLetter ):" -ChildPath $MetadataFileName
+$MetadataFile = Join-Path -Path $UsbDrive -ChildPath $MetadataFileName
 try {
 	$Metadata = Get-Content -LiteralPath $MetadataFile -ErrorAction Stop | ConvertFrom-Json
 } catch {
@@ -91,7 +93,7 @@ foreach ( $Log in $VentoyUpdaterLogs.Clone().GetEnumerator() ) {
 	$VentoyUpdaterLogs.($Log.Name) = Join-Path -Path $VentoyUpdater.Directory.FullName -ChildPath $Log.Value
 }
 Write-Host 'Starting Ventoy update'
-Start-Process -FilePath $VentoyUpdater.FullName -ArgumentList "VTOYCLI /U /Drive:$( $UsbDrive.DriveLetter ):" -NoNewWindow
+Start-Process -FilePath $VentoyUpdater.FullName -ArgumentList "VTOYCLI /U /Drive:$( $UsbDrive )" -NoNewWindow
 
 # Wait for the Ventoy installer / updater to complete
 $Timeout = ( Get-Date ).AddMinutes( 15 )
