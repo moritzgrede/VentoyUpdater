@@ -105,7 +105,7 @@ while ( $true ) {
 			} else {
 				Write-Error 'Ventoy update failed'
 				Get-Content -LiteralPath $VentoyUpdaterLogs.log -Raw -ErrorAction SilentlyContinue | Write-Host
-				# Start-Cleanup
+				Start-Cleanup
 				exit 10
 			}
 		} catch {
