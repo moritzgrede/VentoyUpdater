@@ -18,6 +18,8 @@ This script is provided "as is", without warranty of any kind. Use at your own r
 
 It is strongly recommended to perform regular backups of your data to prevent any dataloss.
 
+This script is an independent project and is not associated with, endorsed by, or otherwise affiliated with [Ventoy](https://www.ventoy.net/).
+
 ## 🚧 Work in Progress
 
 ### Feature suggestions / upcoming changes
