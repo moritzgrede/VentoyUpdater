@@ -9,7 +9,7 @@ $VentoyUpdaterLogs = @{
 	'progress' = 'cli_percent.txt'
 }
 $Transcript = Join-Path -Path $PSScriptRoot -ChildPath 'transcript.log'
-$GetVentoyUsb = Join-Path -Path $PSScriptRoot -ChildPath 'helper\Get-VentoyUsb.ps1'
+$GetVentoyUsb = Join-Path -Path $PSScriptRoot -ChildPath 'library\helper\Get-VentoyUsb.ps1'
 
 #region FUNCTIONS
 function Start-Cleanup {
