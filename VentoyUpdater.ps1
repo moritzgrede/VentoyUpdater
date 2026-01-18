@@ -48,7 +48,6 @@ try {
 Write-Host "Current installed version is $( $Metadata.version )"
 
 # Get latest release from GitHub
-$RestResult = $null
 $LatestRelease = Invoke-RestMethod -Uri 'https://api.github.com/repos/ventoy/Ventoy/releases/latest' -StatusCodeVariable 'RestResult'
 if ( $RestResult -ne 200 ) {
 	Write-Error "Rest API call returned status code $( $RestResult )"
