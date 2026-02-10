@@ -9,6 +9,8 @@ Update your [Ventoy](https://www.ventoy.net/) <sup>(not affiliated)</sup> USB dr
     - If the version is different, it'll download the latest release and run the Updater (on the very first run the Updater will always run because the necessary metadata file does not yet exist)
     - After a successful update the script will put / update a `metadata.json` file on the USB drive with the new version number
 
+❗ The script will need to run elevated (as administrator) as the Ventoy Updater requires this to update.
+
 As an example I have attached a Windows Scheduled Task definition in `ScheduledTask.xml`. You can import the file in the Task Scheduler, just be sure to change the path to the folder where you downloaded / cloned this repository (change `%REPLACE WITH PATH TO FOLDER%`). Additionally you may change the triggers, currently the script will be executed every Monday as soon as possible (if the start is missed, it is executed later). The task and in general the script will have to run as an administrator as the updater can otherwise not update the USB drive.
 
 Running the script will create a transcript called `transcript.log` in the same folder the script is located. When running as a scheduled task this can help you to keep an eye on the output of the script and any errors that may come up.
